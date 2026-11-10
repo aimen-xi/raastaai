@@ -39,7 +39,7 @@ These results are from 2026-11-10, on the laptop with the models present.
 
 | Type | Total | Passed | Failed |
 |------|-------|--------|--------|
-| Unit: API rules + real models (pytest) | 51 | 51 | 0 |
+| Unit: API rules + real models (pytest) | 52 | 52 | 0 |
 | Unit: admin logic (vitest) | 9 | 9 | 0 |
 | Unit: citizen API client (flutter test) | 5 | 5 | 0 |
 | Integration: Firestore security rules (emulator) | 6 | 6 | 0 |
