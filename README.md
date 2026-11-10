@@ -125,6 +125,8 @@ The names are listed in [`.env.example`](.env.example). Values go in a local `.e
 
 ### Run
 
+On Windows, double-click **`start_server.bat`** in the project folder. Or run:
+
 ```bash
 .venv/Scripts/python tools/serve_public.py
 ```
@@ -134,7 +136,13 @@ This one command:
 - opens a Cloudflare quick tunnel;
 - publishes the tunnel URL to Firestore `public/config`. Both apps read it at runtime.
 
-If the tunnel drops, the script reconnects by itself.
+While it runs:
+- If the tunnel drops (for example a Wi-Fi blip), it reconnects and publishes the new URL.
+- If the API crashes, it restarts on the same port. After 4 crashes in 10 minutes it stops and shows the error.
+- Windows is kept from sleeping. This changes no power settings and ends when the window closes. Closing the lid can still sleep the laptop, so keep it open during the demo.
+- Starting it twice is refused, so two copies never fight over the port.
+
+To check it's up, open `<tunnel URL>/health` in a browser. The window prints the URL.
 
 To run the apps locally against it:
 
@@ -188,7 +196,10 @@ See [docs/testing.md](docs/testing.md).
 ## Known limitations
 
 - **The AI service runs on a laptop**, behind a free Cloudflare quick tunnel.
-  - Hugging Face Docker Spaces now need a paid plan, and the team rule is free plans only.
+  - We found no free host that fits the API (about 1.1 GB of memory with the three models loaded).
+    - Hugging Face now needs a paid PRO plan to run Docker or Gradio Spaces.
+    - Render's free tier has 512 MB of memory.
+    - The team rule is free plans only.
   - The websites and database are hosted, but photo analysis and report submission need that laptop online.
   - The tunnel URL changes when the server restarts; the apps pick up the new one automatically.
 - **Pothole detection is weaker on out-of-domain photos.**
