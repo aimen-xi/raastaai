@@ -1,3 +1,4 @@
+# ---------------------------------------------------------------- template (se-max-template)
 # Environment and secrets
 .env
 .env.*
@@ -57,3 +58,29 @@ htmlcov/
 Thumbs.db
 .idea/
 .vscode/
+
+# ---------------------------------------------------------------- RaastaAI
+# Secrets: Firebase service-account key, runtime HMAC/IP-salt secrets, tokens. Never commit.
+secrets/
+*-firebase-adminsdk-*.json
+
+# AI models: too large for GitHub (one is 104 MB). Rebuilt by tools/export_models.py;
+# sources, licences and SHA-256 hashes are pinned in api/models/models.json.
+api/models/raw/
+api/models/*.onnx
+
+# Evaluation photos: third-party dataset images, and some show real people. Not committed
+# (event rule: no real personal data). Re-download with tools/fetch_eval_images.py; the
+# manifest with sources and licences is committed.
+eval/images/*/
+eval/set1/
+eval/raw_video/
+
+# Build outputs: the APK is published as a GitHub Release, not committed
+release/
+app/web/download/
+
+# Local tooling / caches
+.claude/
+.firebase/
+tools/.seeded.json
