@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// RaastaAI — deny-by-default.
+// Clients NEVER write: every write goes through the RaastaAI API (Admin SDK bypasses rules),
+// which validates input, strips EXIF, rate-limits and checks the admin claim for status changes.
+// Only signed-in admins (custom claim admin == true) may read report data for the dashboard.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /clusters/{clusterId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Photo bytes: never readable from a client; the dashboard gets them via the API.
+    match /reportImages/{reportId} {
+      allow read, write: if false;
+    }
+
+    // Public, non-secret runtime config (e.g. the current API address). Only `get` of the one
+    // known doc; no listing, no writes (tools/serve_public.py writes it with the Admin SDK).
+    match /public/config {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    match /rateLimits/{key} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
