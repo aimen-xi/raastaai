@@ -1,0 +1,6 @@
+tests/
+models/raw/
+models/garbage_kendrickfff.onnx
+**/__pycache__/
+*.pyc
+.env
