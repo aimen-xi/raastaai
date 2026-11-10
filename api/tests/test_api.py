@@ -485,13 +485,28 @@ def test_same_photo_other_person_other_place_is_rejected(ctx):
     assert len(store.data["reports"]) == 1
 
 
-def test_bundled_demo_samples_may_be_reused(ctx):
+def test_bundled_demo_samples_may_be_reused(ctx, monkeypatch):
     client, store, _, box = ctx
-    sample = os.path.join(os.path.dirname(__file__), "..", "..", "app", "assets", "samples", "pothole.jpg")
-    data = open(sample, "rb").read()
+    import hashlib
+
+    data = _scene(9)  # stands in for app/assets/samples/pothole.jpg (exempted by its SHA-256)
+    monkeypatch.setattr(main, "SAMPLE_SHA256", {hashlib.sha256(data).hexdigest()})
     a = submit(client, img=data)
     box.caller = Caller(uid="judge-2")
     b = submit(client, img=data, lat=LAHORE[0] + 0.02)
     c = submit(client, img=data, lat=LAHORE[0] + 0.04)
     assert [x.status_code for x in (a, b, c)] == [201, 201, 201]
     assert store.data["reports"][a.json()["reportId"]]["demoSample"] is True
+
+
+def test_sample_hashes_come_from_the_app_samples_folder(tmp_path):
+    import hashlib
+
+    (tmp_path / "pothole.jpg").write_bytes(b"sample-bytes")
+    (tmp_path / "CREDITS.txt").write_text("not an image")
+    old = main.settings.sample_dir
+    object.__setattr__(main.settings, "sample_dir", str(tmp_path))  # settings is a frozen dataclass
+    try:
+        assert main._sample_hashes() == {hashlib.sha256(b"sample-bytes").hexdigest()}
+    finally:
+        object.__setattr__(main.settings, "sample_dir", old)
