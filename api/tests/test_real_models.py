@@ -1,5 +1,5 @@
 """Judge check 'irrelevant photos (people, animals, blank images) are not accepted as issues',
-run against the REAL ONNX models. Skipped when the models aren't on disk (e.g. CI without LFS)."""
+run against the REAL ONNX models. Skipped when the models aren't on disk (e.g. CI: models aren't committed)."""
 from __future__ import annotations
 
 import csv
@@ -37,7 +37,11 @@ def test_blank_images_not_issue(clf, colour):
 
 
 def _files(label):
-    with open(os.path.join(EVAL, "manifest.csv"), newline="") as f:
+    """Eval photos for a label; empty when eval/set1 isn't downloaded (CI: photos aren't committed)."""
+    manifest = os.path.join(EVAL, "manifest.csv")
+    if not os.path.exists(manifest):
+        return []
+    with open(manifest, newline="") as f:
         return [r["file"] for r in csv.DictReader(f) if r["label"] == label]
 
 
