@@ -8,6 +8,10 @@
 4. writes that address to the public Firestore doc `public/config`, which both apps read at startup
 Keep the window open during the demo; Ctrl+C stops everything. Re-running gives a new address and
 the apps pick it up automatically (no rebuild, no redeploy).
+
+Demo hardening: the laptop is kept awake while this runs (Windows), a crashed API is restarted on
+the same port (the tunnel keeps working), and a dropped tunnel is reopened and re-published.
+On Windows, double-click start_server.bat in the project folder instead of typing the command.
 """
 from __future__ import annotations
 
@@ -69,18 +73,41 @@ def publish(api_base: str):
         {"apiBase": api_base, "updatedAt": datetime.now(timezone.utc)})
 
 
-def main():
-    env = dict(os.environ, ALLOWED_ORIGINS=",".join(ORIGINS), **runtime_secrets())
+def keep_awake(on: bool):
+    """Stop Windows from sleeping while the server runs (screen may still turn off). Only affects
+    this process; nothing in the power settings is changed and it ends when the script exits."""
+    if os.name != "nt":
+        return
+    import ctypes
+    ES_CONTINUOUS, ES_SYSTEM_REQUIRED = 0x80000000, 0x00000001
+    ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | (ES_SYSTEM_REQUIRED if on else 0))
+
+
+def start_api(env: dict) -> subprocess.Popen | None:
+    """Start uvicorn and wait until /health answers. None if it didn't come up."""
     api = subprocess.Popen([PY, "-m", "uvicorn", "app.main:app", "--app-dir", "api", "--host", "127.0.0.1",
                             "--port", str(PORT), "--no-access-log"], cwd=ROOT, env=env)
     print("Starting API (loading models)...", flush=True)
     for _ in range(120):
         if get(f"http://127.0.0.1:{PORT}/health", 3) == 200:
-            break
+            print("API ready on http://127.0.0.1:%d" % PORT, flush=True)
+            return api
         if api.poll() is not None:
-            sys.exit("API failed to start (is port 7860 already in use?)")
+            return None
         time.sleep(1)
-    print("API ready on http://127.0.0.1:%d" % PORT, flush=True)
+    api.terminate()
+    return None
+
+
+def main():
+    if get(f"http://127.0.0.1:{PORT}/health", 3) == 200:
+        sys.exit("The server is already running (port %d answers). Use that window, or close it first." % PORT)
+    env = dict(os.environ, ALLOWED_ORIGINS=",".join(ORIGINS), **runtime_secrets())
+    api = start_api(env)
+    if api is None:
+        sys.exit("API failed to start (is port 7860 already in use?)")
+    keep_awake(True)
+    restarts: list[float] = []
 
     tun, url = open_tunnel()
     if url:
@@ -92,8 +119,19 @@ def main():
     # open a fresh tunnel and publish the new address. Both apps re-read it on their next request.
     fails = 0
     try:
-        while api.poll() is None:
+        while True:
             time.sleep(30)
+            if api.poll() is not None:
+                # API crashed: restart it on the same port; the tunnel and published URL stay valid.
+                restarts = [t for t in restarts if time.time() - t < 600] + [time.time()]
+                if len(restarts) > 3:
+                    print("The API crashed 4 times in 10 minutes - stopping. Check the errors above.", flush=True)
+                    break
+                print("API stopped unexpectedly - restarting it...", flush=True)
+                api = start_api(env)
+                if api is None:
+                    print("API could not restart - stopping. Check the errors above.", flush=True)
+                    break
             ok = bool(url) and tun.poll() is None and get(f"{url}/health", 15) == 200
             fails = 0 if ok else fails + 1
             if fails >= 4 or tun.poll() is not None:
@@ -107,12 +145,12 @@ def main():
                 else:
                     new_tun.kill()
                     print("Still offline; will retry in 30 s.", flush=True)
-        print("The API process exited. Re-run this script.", flush=True)
     except KeyboardInterrupt:
         pass
     finally:
+        keep_awake(False)
         for p in (tun, api):
-            if p.poll() is None:
+            if p is not None and p.poll() is None:
                 p.terminate()
 
 
