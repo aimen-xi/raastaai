@@ -1,0 +1,17 @@
+{
+    "name": "RaastaAI",
+    "short_name": "RaastaAI",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F7F7F4",
+    "theme_color": "#1F2933",
+    "description": "Report potholes and garbage with one photo. Pilot concept.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        { "src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "icons/Icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+        { "src": "icons/Icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}

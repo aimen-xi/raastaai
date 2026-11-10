@@ -1,0 +1,3 @@
+pothole.jpg  <- FarzadNekouee repo sample_video.mp4#frame281  (MIT)
+road.jpg  <- Arpitraj01/Pothole_classification:datasets/test/none/IMG_1293.jpeg  (MIT)
+garbage.jpg  <- Shynuaa/Street-garbage:yolo/test/images/6134143_3278666.jpg  (MIT)
