@@ -5,9 +5,9 @@ Complete before 3:00 PM. Submit your final commit hash through the organizers' f
 ## Submission details
 
 - **Team name:**
-- **Repository URL:**
+- **Repository URL:** https://github.com/aimen-xi/raastaai
 - **Final commit hash:**
-- **Live URL / install link:**
+- **Live URL / install link:** https://raastaai-citizen.web.app · APK: https://github.com/aimen-xi/raastaai/releases/latest/download/RaastaAI.apk · Admin: https://rastaai-e99f8.web.app
 - **Submitted at (time):**
 
 ## Checklist
